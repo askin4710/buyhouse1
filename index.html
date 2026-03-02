@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收購屋 | 專業 IT 設備與零件估價系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .tech-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
+        .modal-content { background-color: white; margin: 3% auto; padding: 0; border-radius: 1rem; width: 95%; max-width: 800px; height: 85vh; display: flex; flex-direction: column; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <nav class="bg-white shadow-md sticky top-0 z-50 py-4 px-6 flex justify-between items-center">
+        <div class="text-3xl font-black text-blue-700 tracking-tighter">收購屋</div>
+        <button onclick="toggleCart()" class="relative bg-blue-50 text-blue-700 font-bold px-4 py-2 rounded-full border border-blue-200 hover:bg-blue-100 transition">
+            📋 報價單 (<span id="cartCount">0</span>)
+        </button>
+    </nav>
+
+    <header class="tech-bg text-white py-12 px-6 text-center">
+        <h1 class="text-3xl md:text-4xl font-black mb-3">IT 資產快速估價系統</h1>
+        <p class="text-slate-400 text-sm md:text-base">選擇品項型號 ➔ 自動計算總價 ➔ 一鍵預約收購</p>
+    </header>
+
+    <section class="py-10 max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button onclick="openModal('cpu')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-blue-500 hover:shadow-xl transition flex flex-col items-center">
+            <span class="text-4xl mb-3">🔳</span>
+            <span class="font-bold">處理器 (CPU)</span>
+        </button>
+        <button onclick="openModal('ram')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-blue-500 hover:shadow-xl transition flex flex-col items-center">
+            <span class="text-4xl mb-3">📟</span>
+            <span class="font-bold">記憶體 (RAM)</span>
+        </button>
+        <button onclick="openModal('hdd')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-blue-500 hover:shadow-xl transition flex flex-col items-center">
+            <span class="text-4xl mb-3">💽</span>
+            <span class="font-bold">硬碟 (HDD/SSD)</span>
+        </button>
+        <button onclick="openModal('server')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-blue-500 hover:shadow-xl transition flex flex-col items-center">
+            <span class="text-4xl mb-3">🖥️</span>
+            <span class="font-bold">伺服器</span>
+        </button>
+        <button onclick="openModal('pc')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-blue-500 hover:shadow-xl transition flex flex-col items-center">
+            <span class="text-4xl mb-3">🏠</span>
+            <span class="font-bold">桌上型電腦</span>
+        </button>
+        <button onclick="openModal('laptop')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-blue-500 hover:shadow-xl transition flex flex-col items-center">
+            <span class="text-4xl mb-3">💻</span>
+            <span class="font-bold">筆記型電腦</span>
+        </button>
+        <button onclick="openModal('odd')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-blue-500 hover:shadow-xl transition flex flex-col items-center">
+            <span class="text-4xl mb-3">💿</span>
+            <span class="font-bold">筆電光碟機</span>
+        </button>
+    </section>
+
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <div class="bg-blue-700 p-5 text-white flex justify-between items-center">
+                <h2 id="modalTitle" class="text-xl font-bold">品項明細</h2>
+                <span onclick="closeModal()" class="text-3xl cursor-pointer hover:text-blue-200">&times;</span>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2 md:p-4">
+                <table class="w-full text-left">
+                    <thead class="sticky top-0 bg-white shadow-sm z-10">
+                        <tr class="text-slate-500 border-b text-sm">
+                            <th class="p-3">產品型號/規格</th>
+                            <th class="p-3">參考收購價</th>
+                            <th class="p-3 text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalList" class="text-sm md:text-base"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="cartPanel" class="fixed right-0 top-0 h-full w-full md:w-96 bg-white shadow-2xl z-[110] translate-x-full transition-transform duration-300 p-6 flex flex-col border-l">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-blue-800 tracking-tight">📋 我的報價單</h2>
+            <button onclick="toggleCart()" class="text-3xl text-slate-400 hover:text-black">&times;</button>
+        </div>
+        <div id="cartList" class="flex-1 overflow-y-auto space-y-3 px-1">
+            </div>
+        <div class="mt-6 border-t pt-4">
+            <div class="flex justify-between text-xl font-black mb-4">
+                <span>估計總價：</span>
+                <span class="text-blue-600" id="totalPrice">$ 0</span>
+            </div>
+            <button onclick="submitQuote()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 shadow-lg active:scale-95 transition">確認報價 / 預約收購</button>
+            <p class="text-[10px] text-slate-400 mt-3 text-center leading-tight">實際價格將依產品外觀、功能損益、市場波動由工程師現場最終確認。</p>
+        </div>
+    </div>
+
+    <script>
+        // 完整數據庫
+        const db = {
+            cpu: {
+                title: "處理器 (CPU) 報價清單",
+                items: [
+                    { name: "Intel Core i9-14900K", price: 12000 },
+                    { name: "Intel Core i7-14700K", price: 8500 },
+                    { name: "Intel Core i5-14600K", price: 5500 },
+                    { name: "Intel Core i9-13900K", price: 9500 },
+                    { name: "Intel Core i7-13700", price: 6800 },
+                    { name: "Intel Core i5-13400", price: 3800 },
+                    { name: "AMD Ryzen 9 7950X", price: 10500 },
+                    { name: "AMD Ryzen 7 7700X", price: 6200 },
+                    { name: "AMD Ryzen 5 7600", price: 3500 },
+                    { name: "Intel Xeon Gold 6248", price: 15000 },
+                    { name: "Intel Xeon Silver 4210", price: 4000 },
+                    { name: "AMD EPYC 7742 (64核)", price: 28000 },
+                    { name: "Intel Core i7-12700", price: 4500 },
+                    { name: "AMD Ryzen 5 5600X", price: 2200 }
+                ]
+            },
+            ram: {
+                title: "記憶體 (RAM) 報價清單",
+                items: [
+                    { name: "DDR5 6000 32GB (16Gx2)", price: 2200 },
+                    { name: "DDR5 5600 16GB", price: 1100 },
+                    { name: "DDR4 3200 32GB", price: 1200 },
+                    { name: "DDR4 3200 16GB", price: 650 },
+                    { name: "DDR4 2666 8GB", price: 250 },
+                    { name: "Server DDR4 64GB ECC REG", price: 2800 },
+                    { name: "Server DDR4 32GB ECC REG", price: 1200 },
+                    { name: "Laptop DDR5 16GB", price: 1000 },
+                    { name: "Laptop DDR4 16GB", price: 500 },
+                    { name: "Laptop DDR4 8GB", price: 200 }
+                ]
+            },
+            hdd: {
+                title: "硬碟 (HDD/SSD) 報價清單",
+                items: [
+                    { name: "Samsung 990 Pro 2TB NVMe", price: 2800 },
+                    { name: "Crucial P5 Plus 1TB NVMe", price: 1200 },
+                    { name: "SATA SSD 1TB (各大品牌)", price: 800 },
+                    { name: "SATA SSD 512GB", price: 350 },
+                    { name: "Enterprise 18TB HDD (SAS/SATA)", price: 5500 },
+                    { name: "Enterprise 12TB HDD", price: 3200 },
+                    { name: "NAS HDD 8TB (Red/Wolf)", price: 2200 },
+                    { name: "3.5吋 HDD 4TB", price: 700 },
+                    { name: "2.5吋 HDD 1TB (筆電)", price: 150 }
+                ]
+            },
+            laptop: {
+                title: "筆記型電腦 報價清單",
+                items: [
+                    { name: "MacBook Pro M3 14吋", price: 35000 },
+                    { name: "MacBook Air M2 13吋", price: 18000 },
+                    { name: "ASUS ROG 電競系列 (RTX40系)", price: 25000 },
+                    { name: "MSI Stealth 系列 (RTX30系)", price: 15000 },
+                    { name: "Dell Latitude 商務系列", price: 8000 },
+                    { name: "Lenovo ThinkPad X1 Carbon", price: 12000 },
+                    { name: "HP EliteBook 系列", price: 7500 },
+                    { name: "Surface Pro 9", price: 14000 },
+                    { name: "各品牌 i5 舊款筆電", price: 3500 },
+                    { name: "各品牌 i7 舊款筆電", price: 5000 },
+                    { name: "螢幕損壞/不開機故障機", price: 800 }
+                ]
+            },
+            server: {
+                title: "伺服器設備 報價清單",
+                items: [
+                    { name: "Dell PowerEdge R740", price: 45000 },
+                    { name: "Dell PowerEdge R630", price: 12000 },
+                    { name: "HP ProLiant DL380 Gen10", price: 38000 },
+                    { name: "HP ProLiant DL360 Gen9", price: 9000 },
+                    { name: "Supermicro 2U 伺服器", price: 15000 },
+                    { name: "Synology RS3621RP+ NAS", price: 22000 },
+                    { name: "QNAP TS-873AU NAS", price: 18000 },
+                    { name: "Cisco C240 M5", price: 20000 },
+                    { name: "伺服器專用冗餘電源 (PSU)", price: 1500 },
+                    { name: "SAS 陣列卡 (RAID Card)", price: 2500 }
+                ]
+            },
+            pc: {
+                title: "桌上型電腦 報價清單",
+                items: [
+                    { name: "i9/RTX4090 頂級組裝機", price: 65000 },
+                    { name: "i7/RTX4070 電競組裝機", price: 28000 },
+                    { name: "ASUS ExpertCenter 辦公機", price: 6000 },
+                    { name: "HP ProDesk 系列", price: 5500 },
+                    { name: "Dell OptiPlex 系列", price: 5800 },
+                    { name: "Mac Studio M2 Max", price: 42000 },
+                    { name: "Mac Mini M2", price: 11000 },
+                    { name: "i5 四核心舊款辦公機", price: 1500 },
+                    { name: "報廢主機 (零件齊全)", price: 200 }
+                ]
+            },
+            odd: {
+                title: "筆電光碟機 (ODD) 報價清單",
+                items: [
+                    { name: "9.0mm Slim DVD-RW (全新)", price: 150 },
+                    { name: "9.5mm Slim DVD-RW (拆機)", price: 50 },
+                    { name: "12.7mm DVD-RW (舊款)", price: 30 },
+                    { name: "藍光 (Blu-ray) 筆電光碟機", price: 600 },
+                    { name: "USB 外接式 DVD 燒錄機", price: 250 },
+                    { name: "光碟機轉硬碟支架 (大宗)", price: 15 }
+                ]
+            }
+        };
+
+        let myCart = [];
+
+        function openModal(type) {
+            const data = db[type];
+            document.getElementById('modalTitle').innerText = data.title;
+            const listEl = document.getElementById('modalList');
+            
+            let html = '';
+            data.items.forEach((item) => {
+                html += `
+                    <tr class="border-b border-slate-50 hover:bg-blue-50 transition">
+                        <td class="p-3 font-bold text-slate-700">${item.name}</td>
+                        <td class="p-3 text-blue-600 font-black">$ ${item.price.toLocaleString()}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="addToCart('${item.name}', ${item.price})" class="bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-blue-800 transition">加入</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            listEl.innerHTML = html;
+            document.getElementById('itemModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('itemModal').style.display = 'none';
+        }
+
+        function addToCart(name, price) {
+            myCart.push({ name, price });
+            updateCartUI();
+            // 小小的動畫回饋
+            const btn = event.target;
+            btn.innerText = '已加入';
+            btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+            setTimeout(() => {
+                btn.innerText = '加入';
+                btn.classList.replace('bg-emerald-500', 'bg-blue-600');
+            }, 600);
+        }
+
+        function updateCartUI() {
+            const listEl = document.getElementById('cartList');
+            const totalEl = document.getElementById('totalPrice');
+            const countEl = document.getElementById('cartCount');
+            
+            let html = '';
+            let total = 0;
+            
+            myCart.forEach((item, index) => {
+                total += item.price;
+                html += `
+                    <div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center border border-slate-200 animate-in fade-in slide-in-from-right-4 duration-200">
+                        <div class="flex-1 pr-2">
+                            <div class="font-bold text-sm text-slate-800 leading-tight">${item.name}</div>
+                            <div class="text-blue-600 font-bold text-sm mt-1">$ ${item.price.toLocaleString()}</div>
+                        </div>
+                        <button onclick="removeFromCart(${index})" class="text-slate-300 hover:text-red-500 transition text-2xl">×</button>
+                    </div>
+                `;
+            });
+            
+            listEl.innerHTML = html || '<div class="text-center text-slate-400 mt-20 font-medium">報價單尚未加入品項</div>';
+            totalEl.innerText = `$ ${total.toLocaleString()}`;
+            countEl.innerText = myCart.length;
+        }
+
+        function removeFromCart(index) {
+            myCart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function toggleCart() {
+            document.getElementById('cartPanel').classList.toggle('translate-x-full');
+        }
+
+        function submitQuote() {
+            if(myCart.length === 0) {
+                alert('報價單內尚無品項喔！');
+                return;
+            }
+            const total = document.getElementById('totalPrice').innerText;
+            const summary = myCart.map(i => `• ${i.name} ($${i.price})`).join('\\n');
+            alert(`【收購屋 預約單】\\n--------------------\\n${summary}\\n--------------------\\n估計總價：${total}\\n\\n已為您記錄報價，請聯繫客服進行實機查驗！`);
+        }
+
+        window.onclick = (e) => { if(e.target.id === 'itemModal') closeModal(); }
+    </script>
+</body>
+</html>
